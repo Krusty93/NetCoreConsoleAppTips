@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+   <EnableNETAnalyzer>True</EnableNETAnalyzer>
+   <AnalysisLevel>latest</AnalysisLevel> 
+   <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+   <AllEnabledByDefault>True</AllEnabledByDefault>
+  </PropertyGroup>
+
+</Project>
