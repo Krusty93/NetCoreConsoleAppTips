@@ -18,6 +18,8 @@ namespace NetCoreConsoleApp
         private readonly ILogger<Worker> _logger;
         private readonly MyOptions _options;
 
+        private int? _exitCode;
+
         public Worker(IMyService service, IConfiguration configuration, IHostApplicationLifetime hostLifetime, ILogger<Worker> logger, IOptions<MyOptions> options)
         {
             _myService = service ?? throw new ArgumentNullException(nameof(service));
@@ -31,13 +33,31 @@ namespace NetCoreConsoleApp
         {
             _logger.LogInformation($"Read {_configKey} from settings");
 
-            await _myService.PerformLongTaskAsync();
+            try
+            {
+                await _myService.PerformLongTaskAsync();
 
-            _hostLifetime.StopApplication();
+                _exitCode = 0;
+            }
+            catch (OperationCanceledException)
+            {
+                _logger?.LogInformation("The job has been killed with CTRL+C");
+                _exitCode = -1;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "An error occurred");
+                _exitCode = 1;
+            }
+            finally
+            {
+                _hostLifetime.StopApplication();
+            }
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
+            Environment.ExitCode = _exitCode.GetValueOrDefault(-1);
             _logger?.LogInformation($"Shutting down the service with code {Environment.ExitCode}");
             return Task.CompletedTask;
         }
