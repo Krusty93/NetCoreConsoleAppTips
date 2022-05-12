@@ -12,67 +12,65 @@ using NetCoreConsoleApp.Options;
 using NetCoreConsoleApp.Services;
 using Serilog;
 
-namespace NetCoreConsoleApp
+[Command(
+    Name = "NetCoreConsoleApp"
+    , Description = "My app is very cool 😎")]
+[HelpOption(
+    "-h"
+    , LongName = "help"
+    , Description = "Get info")]
+[VersionOptionFromMember(
+    "-v"
+    , MemberName = nameof(GetVersion))]
+class Program
 {
-    [Command(
-        Name = "NetCoreConsoleApp"
-        , Description = "My app is very cool 😎")]
-    [HelpOption(
-        "-h"
-        , LongName = "help"
-        , Description = "Get info")]
-    [VersionOptionFromMember(
-        "-v"
-        , MemberName = nameof(GetVersion))]
-    class Program
+    [Option(
+        "-o"
+        , "Some option"
+        , CommandOptionType.SingleValue
+        , LongName = "option")]
+    [Range(1, 5)]
+    public int Option { get; } = 1;
+
+    public static Task<int> Main(string[] args) =>
+        CommandLineApplication.ExecuteAsync<Program>(args);
+
+    public async Task<int> OnExecuteAsync(CancellationToken cancellationToken)
     {
-        [Option(
-            "-o"
-            , "Some option"
-            , CommandOptionType.SingleValue
-            , LongName = "option")]
-        [Range(1, 5)]
-        public int Option { get; } = 1;
-
-        public static Task<int> Main(string[] args) =>
-            CommandLineApplication.ExecuteAsync<Program>(args);
-
-        public async Task<int> OnExecuteAsync(CancellationToken cancellationToken)
-        {
-            var host = CreateHostBuilder();
-            await host.RunConsoleAsync(cancellationToken);
-            return Environment.ExitCode;
-        }
-
-        private IHostBuilder CreateHostBuilder()
-        {
-            return Host.CreateDefaultBuilder()
-                .ConfigureLogging(logging =>
-                {
-                    logging.ClearProviders();
-                })
-                .UseSerilog((hostContext, loggerConfiguration) =>
-                {
-                    loggerConfiguration.ReadFrom.Configuration(hostContext.Configuration);
-                })
-                .ConfigureAppConfiguration((hostContext, builder) =>
-                {
-                    builder.AddEnvironmentVariables();
-                })
-                .ConfigureServices(services =>
-                {
-                    services.AddHostedService<Worker>();
-
-                    services.Configure<MyOptions>(options =>
-                    {
-                        options.Value = Option;
-                    });
-
-                    services.AddTransient<IMyService, MyService>();
-                });
-        }
-
-        private static string GetVersion()
-            => typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var host = CreateHostBuilder();
+        await host.RunConsoleAsync(cancellationToken);
+        return Environment.ExitCode;
     }
+
+    private IHostBuilder CreateHostBuilder()
+    {
+        return Host.CreateDefaultBuilder()
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+            })
+            .UseSerilog((hostContext, loggerConfiguration) =>
+            {
+                loggerConfiguration.ReadFrom.Configuration(hostContext.Configuration);
+            })
+            .ConfigureAppConfiguration((hostContext, builder) =>
+            {
+                builder.AddEnvironmentVariables();
+            })
+            .ConfigureServices(services =>
+            {
+                services.AddHostedService<Worker>();
+
+                services.Configure<MyOptions>(options =>
+                {
+                    options.Value = Option;
+                });
+
+                services.AddTransient<IMyService, MyService>();
+            });
+    }
+
+    private static string GetVersion()
+        => typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 }
+
